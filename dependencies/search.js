@@ -100,6 +100,8 @@ var load = function() {
 	};
 	var docs = getDocs();
 
+	var docList = [];
+
 	var searchResultsElement = document.getElementById('resultList');
 	var search = app.rootViewController().view;
 
@@ -114,26 +116,14 @@ var load = function() {
 
 
 	var getListOfDocs = function() {
+		docs = getDocs();
 		return Object.keys(docs)
 				.map(function(aKey){
 					return docs[aKey];
 				});
 	};
 
-	var updateDoc = function(aDoc) {
-		docs = getDocs();
-		docs[aDoc.uuid] = aDoc;
-		println("Storing '" + aDoc.name + "'");
-		println(JSON.stringify(docs));
-		localStorage['net.likn.docs'] = JSON.stringify(docs);
-	};
 
-	var createDocument = function(name) {
-		UUID.shared().generate(function(uuid){
-			var aDoc = new MarkdownDocument(name, '', uuid);
-			updateDoc(aDoc);
-		});
-	};
 
 	(function(){
 		var activeSearch = '';
@@ -141,20 +131,56 @@ var load = function() {
 
 		var selectedIndex = -1;
 
+		var updateDoc = function(aDoc) {
+			println(aDoc);
+			if (aDoc) {
+				docs = getDocs();
+				docs[aDoc.uuid] = aDoc;
+				localStorage['net.likn.docs'] = JSON.stringify(docs);
+			}
+		};
+
+		var createDocument = function(name) {
+			UUID.shared().generate(function(uuid){
+				
+				println("Updating doc -----------------");
+				var newDoc = new MarkdownDocument(name, '# ' + name, uuid);
+				updateDoc(newDoc);
+
+				activeSearch = null;
+				refreshSearchResults(function(){
+					println("Selecting " +  newDoc.uuid + " --------------------");
+					println("doc list: " + docList.length);
+					for (var i = 0; i < docList.length; i++) {
+						var aDoc = docList[i];
+						if (aDoc.uuid == newDoc.uuid) {
+							println("Selecting subview " + i);
+							switchToKeyboardNav();
+							selectedIndex = i;
+							selectSubview();
+							break;
+						} else {
+							println(aDoc.uuid + " doesn't match " + newDoc.uuid);
+						}
+					}
+				});				
+			});
+		};
+
+		
+
 		var performSearch = function(searchTerm) {
-			return getListOfDocs()
+			docList = getListOfDocs()
 					.filter(function(aDoc) {
 						var thisName = app.makeSearchFriendly(aDoc.title);
 						return (thisName.indexOf(searchTerm) != -1);
 					});
+			return docList;
 		};
 
-		var keyupHandler = function(e){
-			println("Val: vs activeSearch '" + activeSearch + "'");
-			var val = app.makeSearchFriendly(aSearchField.value);
-			e = e || event;
-			println(e.keyCode);
 
+		var refreshSearchResults = function(cb) {
+			var val = app.makeSearchFriendly(aSearchField.value);
 			if (activeSearch != val) {
 				activeSearch = val;
 				search.removeAllSubviews();
@@ -168,21 +194,44 @@ var load = function() {
 						search.addSubview(resultViews.shift());
 					}
 				}
-				search.update();
+				search.update(cb);
 			}
 		};
 
+
 		var selectSubview = function() {
+			if (selectedIndex == -1) {
+				var temp = aSearchField.value;
+				aSearchField.value = '';
+				aSearchField.focus();
+				aSearchField.value =  temp;
+			}
+			selectedIndex = Math.min(selectedIndex, search.subviews.length - 1);
 			for (var i = 0; i < search.subviews.length; i++) {
 				var aSubview = search.subviews[i];
-				println("Element: (" + aSubview.uniqueId + "): " + document.getElementById(aSubview.uniqueId));
 				if (i == selectedIndex) {
 					aSubview.element().addClassName('selected');
+					editor.importFile(docList[i].uuid, docList[i].body);
+					editor.open(docList[i].uuid);
+					editor.preview();
 				} else {
 					aSubview.element().removeClassName('selected');
 				}
 			}
 		};
+
+		
+		var editSelectedDocument = function() {
+			editor.edit();
+		};
+
+		editor.on('update', function(){
+			var theContent = editor.exportFile();
+			var aDoc = docList[selectedIndex];
+			aDoc.body = theContent;
+			updateDoc(aDoc);
+		});
+
 
 		var keyboardNavHandler = function(e) {
 			switch(e.keyCode) {
@@ -199,6 +248,7 @@ var load = function() {
 					break;
 				case NetLiknEnterKey:
 					println('enter');
+					editSelectedDocument();
 					break;
 				case NetLiknDeleteKey:
 					println('delete');
@@ -212,6 +262,12 @@ var load = function() {
 			}
 		};
 
+		var switchToKeyboardNav = function() {
+			aSearchField.blur();
+			window.addEventListener('keydown', keyboardNavHandler);
+		}
+
+
 		var keydownHandler = function(e) {
 			window.removeEventListener('keydown', keyboardNavHandler);
 			selectedIndex = -1;
@@ -221,12 +277,15 @@ var load = function() {
 				return false;
 			} else if (	(e.keyCode == NetLiknDownArrowKey) ||
 						(e.keyCode == NetLiknTabKey)) {
-				aSearchField.blur();
-				window.addEventListener('keydown', keyboardNavHandler);
+				switchToKeyboardNav();
 			}
 		};
 
 
+		var keyupHandler = function(e){
+			e = e || event;
+			refreshSearchResults();
+		};
 
 		aSearchField.addEventListener('keyup', _.throttle(keyupHandler, 100));
 		aSearchField.addEventListener('keydown', keydownHandler);
