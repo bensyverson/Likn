@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Pathfinder</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!--[if lt IE 9]>
+   <script>
+      document.createElement('header');
+      document.createElement('nav');
+      document.createElement('section');
+      document.createElement('article');
+      document.createElement('aside');
+      document.createElement('footer');
+      document.createElement('q');
+   </script>
+<![endif]-->
+
+<link rel="stylesheet" type="text/css" href="main.css" />
+
+<script src="http://localhost:35729/livereload.js"></script>
+<script src="epiceditor/js/epiceditor.js"></script>
+
+<script src="dependencies/lodash.js"></script>
+<script src="../PutStuffHere/ajax.js"></script>
+
+
+<script src="../PutStuffHere/queue.js"></script>
+<script src="../PutStuffHere/putstuffhere.js"></script>
+<script src="../Ishmael/uuid.js"></script>
+<script src="../Ishmael/ishmael.js"></script>
+<script src="dependencies/search.js"></script>
+
+	</head>
+	<body onload="load()" id="appRoot">
+
+		<form action="search" id="search">
+			<input type="text" placeholder="Search or create note" id="searchField" />
+		</form>
+
+		<div id="results">
+			<ul id="resultList">
+				<div>
+					<li><span>Title</span>
+						…Short description which gives you a preview of this item…
+					</li>
+					<li><span>Title</span>
+						…Short description which gives you a preview of this item…
+					</li>
+					<li><span>Title</span>
+						…Short description which gives you a preview of this item…
+					</li>
+					<li><span>Title</span>
+						…Short description which gives you a preview of this item…
+					</li>
+				</div>
+			</ul>
+
+			<div id="text">
+				<div class="wrapper">
+					<div id="epiceditor"></div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

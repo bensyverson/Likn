@@ -1,0 +1,146 @@
+/* Resets */
+
+body, html, div, header, nav, section, article, aside, footer, form {
+	display:block;
+	margin: 0;
+	padding: 0;
+}
+
+html, body {
+	width: 100%;
+	height: 100%;
+}
+
+body {
+	background: #555;
+
+}
+
+
+/* Text styles */
+body, input, button {
+	color: #444;
+	font-size: 17px;
+	font-family: "Grand", "Helvetica", sans-serif;
+}
+
+
+button, a {
+	-webkit-transition: 0.15s;
+	-ms-transition: 0.15s;
+	transition: 0.15s;
+}
+
+
+a:link 		{ color: #888; }
+a:visited 	{ color: #888; }
+a:hover 	{ color: #fff; }
+a:active 	{ color: #222; }
+
+
+
+
+input {
+	border: 0;
+	margin: 0;
+	height: 50px;
+	border-radius: 2px;
+}
+
+
+
+/* Search */
+
+#search {
+	padding: 0 40px;
+}
+
+#searchField {
+	width: 100%;
+	padding: 0 40px;
+	margin: 0 -40px;
+	position: relative;
+	z-index: 100;
+}
+
+#results {
+	width: 100%;
+	height: 100%;
+	overflow: scroll;
+	position: relative;
+	display: table;
+	top: -50px;
+
+	background: #222;
+
+	overflow: hidden;
+	color: #bbb;
+}
+
+
+
+#results ul {
+	list-style-type: none;
+
+	width: 200px;
+	background: #282828;
+}
+
+#results ul, #text {
+	padding: 20px 20px;
+	position: relative;
+	height: 100%;
+	
+	display: table-cell;
+	vertical-align: top;
+}
+
+#results ul {
+	padding-top: 50px;
+}
+
+#results ul li {
+	padding: 10px 0;
+	font-weight: 200;
+	font-size: 13px;
+}
+
+#resultList li span{
+	display: block;
+	font-weight: 600;
+}
+
+#text .wrapper {
+	height: 100%;
+	margin-top: 50px;
+	overflow: scroll;
+	padding-bottom: 50px;
+	width: 40em;
+}
+
+.wrapper p {
+	margin: 0 auto;
+	padding: 0;
+	max-width: 30em;
+	margin-bottom: 1em;
+	font-weight: 400;
+}
+
+#resultWrapper {
+	height: 100%;
+	width: 100%;
+}
+
+#epiceditor {
+	z-index: 200;
+	height: 100%;
+	width: 100%;
+	margin: 0 0;
+	-webkit-transform: translate3d(0,0,0);
+}
+
+
+/*
+#epiceditor-utilbar {
+	-webkit-transform: translate3d(0,0,0);
+}*/
