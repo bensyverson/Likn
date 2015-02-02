@@ -110,18 +110,9 @@ var load = function() {
 			// red.name = "Fantastical";
 			// red.update(function(err, success){
 			// });
-			search.removeAllSubviews();
+			// search.removeAllSubviews();
 		}, 500);
 	});
-
-
-	var getListOfDocs = function() {
-		docs = getDocs();
-		return Object.keys(docs)
-				.map(function(aKey){
-					return docs[aKey];
-				});
-	};
 
 
 
@@ -131,8 +122,50 @@ var load = function() {
 
 		var selectedIndex = -1;
 
+		var keyboardNavHandler = function(e) {
+			switch(e.keyCode) {
+				case NetLiknDownArrowKey:
+				case NetLiknTabKey:
+					println('down');
+					selectedIndex ++;
+					selectSubview();
+					break;
+				case NetLiknUpArrowKey:
+					println('up');
+					selectedIndex --;
+					selectSubview();
+					break;
+				case NetLiknEnterKey:
+					println('enter');
+					editSelectedDocument();
+					break;
+				case NetLiknDeleteKey:
+					println('delete <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
+					aSearchField.value = aSearchField.value.substr(0, aSearchField.value.length - 1);
+					aSearchField.focus();
+					e.preventDefault();
+					return false;
+				default:
+					println('?????????');
+					break;
+			}
+		};
+
+		var switchToKeyboardNav = function() {
+			println("SWITHING TO KEYBOARD NAV");
+			aSearchField.blur();
+			window.addEventListener('keydown', keyboardNavHandler);
+		};
+
+		var getListOfDocs = function() {
+			docs = getDocs();
+			return Object.keys(docs)
+					.map(function(aKey){
+						return docs[aKey];
+					});
+		};
+
 		var updateDoc = function(aDoc) {
-			println(aDoc);
 			if (aDoc) {
 				docs = getDocs();
 				docs[aDoc.uuid] = aDoc;
@@ -151,19 +184,8 @@ var load = function() {
 				refreshSearchResults(function(){
 					println("Selecting " +  newDoc.uuid + " --------------------");
 					println("doc list: " + docList.length);
-					for (var i = 0; i < docList.length; i++) {
-						var aDoc = docList[i];
-						if (aDoc.uuid == newDoc.uuid) {
-							println("Selecting subview " + i);
-							switchToKeyboardNav();
-							selectedIndex = i;
-							selectSubview();
-							break;
-						} else {
-							println(aDoc.uuid + " doesn't match " + newDoc.uuid);
-						}
-					}
-				});				
+					selectDoc(newDoc);
+				});
 			});
 		};
 
@@ -178,8 +200,28 @@ var load = function() {
 			return docList;
 		};
 
+		var selectDoc = function(newDoc) {
+			for (var i = 0; i < docList.length; i++) {
+				var aDoc = docList[i];
+				if (aDoc.uuid == newDoc.uuid) {
+					println("Selecting subview " + i);
+					switchToKeyboardNav();
+					selectSubview(i);
+					break;
+				} else {
+					println(aDoc.uuid + " doesn't match " + newDoc.uuid);
+				}
+			}
+		};
+
+		var viewClicked = function(aView) {
+			if ('doc' in aView) {
+				selectDoc(aView['doc']);
+			}
+		};
 
 		var refreshSearchResults = function(cb) {
+			println("refresh search.");
 			var val = app.makeSearchFriendly(aSearchField.value);
 			if (activeSearch != val) {
 				activeSearch = val;
@@ -187,19 +229,32 @@ var load = function() {
 				if (activeSearch != '') {
 					var resultViews = performSearch(val)
 						.map(function(aDoc){
-							return new SearchResultView(null, aDoc);
+							return new SearchResultView(null, aDoc);;
 						});
 
 					while (resultViews[0]){
 						search.addSubview(resultViews.shift());
 					}
 				}
-				search.update(cb);
+				search.update(function(){
+					println("returned with " + search.subviews.length + " views");
+					for (var i = 0; i < search.subviews.length; i++){
+						var aView = search.subviews[i];
+						var makeClicker = function(v) {
+							return function(x){
+								viewClicked(v);
+							};
+						};
+						aView.element().addEventListener('click', makeClicker(aView));
+					}
+					if (cb) cb();
+				});
 			}
 		};
 
 
-		var selectSubview = function() {
+		var selectSubview = function(anIndex) {
+			selectedIndex = (typeof anIndex === 'undefined') ? selectedIndex : anIndex;
 			if (selectedIndex == -1) {
 				var temp = aSearchField.value;
 				aSearchField.value = '';
@@ -220,6 +275,7 @@ var load = function() {
 			}
 		};
 
+
 		
 		var editSelectedDocument = function() {
 			editor.edit();
@@ -233,39 +289,6 @@ var load = function() {
 		});
 
 
-		var keyboardNavHandler = function(e) {
-			switch(e.keyCode) {
-				case NetLiknDownArrowKey:
-				case NetLiknTabKey:
-					println('down');
-					selectedIndex ++;
-					selectSubview();
-					break;
-				case NetLiknUpArrowKey:
-					println('up');
-					selectedIndex --;
-					selectSubview();
-					break;
-				case NetLiknEnterKey:
-					println('enter');
-					editSelectedDocument();
-					break;
-				case NetLiknDeleteKey:
-					println('delete');
-					aSearchField.value = aSearchField.value.substr(0, aSearchField.value.length - 1);
-					aSearchField.focus();
-					e.preventDefault();
-					return false;
-				default:
-					println('?????????');
-					break;
-			}
-		};
-
-		var switchToKeyboardNav = function() {
-			aSearchField.blur();
-			window.addEventListener('keydown', keyboardNavHandler);
-		}
 
 
 		var keydownHandler = function(e) {
