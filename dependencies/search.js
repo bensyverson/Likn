@@ -1,6 +1,29 @@
 "use strict";
 
-/**  @const {number} */ var KeyUpThrottle = 300;
+Element.prototype.hasClassName = function(name) {
+    return new RegExp("(?:^|\\s+)" + name + "(?:\\s+|$)").test(this.className);
+};
+
+Element.prototype.addClassName = function(name) {
+    if (!this.hasClassName(name)) {
+        this.className = this.className ? [this.className, name].join(' ') : name;
+    }
+};
+
+Element.prototype.removeClassName = function(name) {
+    if (this.hasClassName(name)) {
+        var c = this.className;
+        this.className = c.replace(new RegExp("(?:^|\\s+)" + name + "(?:\\s+|$)", "g"), "");
+    }
+};
+
+
+/** @const {number} */ var KeyUpThrottle = 300;
+/** @const {number} */ var NetLiknEnterKey = 13;
+/** @const {number} */ var NetLiknUpArrowKey = 38;
+/** @const {number} */ var NetLiknDownArrowKey = 40;
+/** @const {number} */ var NetLiknTabKey = 9;
+/** @const {number} */ var NetLiknDeleteKey = 8;
 
 
 
@@ -116,6 +139,8 @@ var load = function() {
 		var activeSearch = '';
 		var aSearchField = document.getElementById('searchField');
 
+		var selectedIndex = -1;
+
 		var performSearch = function(searchTerm) {
 			return getListOfDocs()
 					.filter(function(aDoc) {
@@ -137,7 +162,7 @@ var load = function() {
 					var resultViews = performSearch(val)
 						.map(function(aDoc){
 							return new SearchResultView(null, aDoc);
-					});
+						});
 
 					while (resultViews[0]){
 						search.addSubview(resultViews.shift());
@@ -147,16 +172,66 @@ var load = function() {
 			}
 		};
 
-		var keydownHandler = function(e) {
-			if (e.keyCode == 13) {
-				e.preventDefault();
-				createDocument(aSearchField.value);
-				return false;
+		var selectSubview = function() {
+			for (var i = 0; i < search.subviews.length; i++) {
+				var aSubview = search.subviews[i];
+				println("Element: (" + aSubview.uniqueId + "): " + document.getElementById(aSubview.uniqueId));
+				if (i == selectedIndex) {
+					aSubview.element().addClassName('selected');
+				} else {
+					aSubview.element().removeClassName('selected');
+				}
 			}
 		};
 
-		aSearchField.addEventListener('keyup', _.throttle(keyupHandler, 300));
+		var keyboardNavHandler = function(e) {
+			switch(e.keyCode) {
+				case NetLiknDownArrowKey:
+				case NetLiknTabKey:
+					println('down');
+					selectedIndex ++;
+					selectSubview();
+					break;
+				case NetLiknUpArrowKey:
+					println('up');
+					selectedIndex --;
+					selectSubview();
+					break;
+				case NetLiknEnterKey:
+					println('enter');
+					break;
+				case NetLiknDeleteKey:
+					println('delete');
+					aSearchField.value = aSearchField.value.substr(0, aSearchField.value.length - 1);
+					aSearchField.focus();
+					e.preventDefault();
+					return false;
+				default:
+					println('?????????');
+					break;
+			}
+		};
+
+		var keydownHandler = function(e) {
+			window.removeEventListener('keydown', keyboardNavHandler);
+			selectedIndex = -1;
+			if (e.keyCode == NetLiknEnterKey) {
+				e.preventDefault();
+				createDocument(aSearchField.value);
+				return false;
+			} else if (	(e.keyCode == NetLiknDownArrowKey) ||
+						(e.keyCode == NetLiknTabKey)) {
+				aSearchField.blur();
+				window.addEventListener('keydown', keyboardNavHandler);
+			}
+		};
+
+
+
+		aSearchField.addEventListener('keyup', _.throttle(keyupHandler, 100));
 		aSearchField.addEventListener('keydown', keydownHandler);
+
+
 	})();
 };
 

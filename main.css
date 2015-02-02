@@ -52,13 +52,13 @@ input {
 /* Search */
 
 #search {
-	padding: 0 40px;
+	padding: 0 20px;
 }
 
 #searchField {
 	width: 100%;
-	padding: 0 40px;
-	margin: 0 -40px;
+	padding: 0 20px;
+	margin: 0 -20px;
 	position: relative;
 	z-index: 100;
 }
@@ -96,11 +96,12 @@ input {
 }
 
 #results ul {
+	padding: 0 0;
 	padding-top: 50px;
 }
 
 #results ul li {
-	padding: 10px 0;
+	padding: 10px 20px;
 	font-weight: 200;
 	font-size: 13px;
 }
@@ -139,6 +140,9 @@ input {
 	-webkit-transform: translate3d(0,0,0);
 }
 
+.selected {
+	background-color: #444;
+}
 
 /*
 #epiceditor-utilbar {
