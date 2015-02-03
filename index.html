@@ -4,7 +4,7 @@
 		<title>Pathfinder</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js"></script>
 <!--[if lt IE 9]>
    <script>
       document.createElement('header');
@@ -28,6 +28,7 @@
 
 <script src="../PutStuffHere/queue.js"></script>
 <script src="../PutStuffHere/putstuffhere.js"></script>
+<script src="../Ishmael/dom.js"></script>
 <script src="../Ishmael/uuid.js"></script>
 <script src="../Ishmael/ishmael.js"></script>
 <script src="dependencies/search.js"></script>
@@ -36,12 +37,12 @@
 	<body onload="load()" id="appRoot">
 
 		<form action="search" id="search">
-			<input type="text" placeholder="Search or create note" id="searchField" />
+			<input type="text" placeholder="Search, or type a name and press return to create a note." id="searchField" />
 		</form>
 
 		<div id="results">
 			<ul id="resultList">
-				<div>
+				<div class="clip">
 					<li><span>Title</span>
 						…Short description which gives you a preview of this item…
 					</li>

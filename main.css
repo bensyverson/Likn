@@ -106,6 +106,12 @@ input {
 	font-size: 13px;
 }
 
+
+#resultList {
+	height: 100%;
+	overflow: scroll;
+}
+
 #resultList li span{
 	display: block;
 	font-weight: 600;

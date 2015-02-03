@@ -1,21 +1,15 @@
 "use strict";
 
-Element.prototype.hasClassName = function(name) {
-    return new RegExp("(?:^|\\s+)" + name + "(?:\\s+|$)").test(this.className);
-};
 
-Element.prototype.addClassName = function(name) {
-    if (!this.hasClassName(name)) {
-        this.className = this.className ? [this.className, name].join(' ') : name;
-    }
-};
+// var client = new Dropbox.Client({ key: "stutb1ia0qe4kjw" });
 
-Element.prototype.removeClassName = function(name) {
-    if (this.hasClassName(name)) {
-        var c = this.className;
-        this.className = c.replace(new RegExp("(?:^|\\s+)" + name + "(?:\\s+|$)", "g"), "");
-    }
-};
+// client.authenticate(function(error, client) {
+//   if (error) {
+// 	return;
+//   }
+// 	println(client);
+// });
+
 
 
 /** @const {number} */ var KeyUpThrottle = 300;
@@ -81,241 +75,271 @@ SearchResultView.prototype.updateLocals = function(cb) {
 };
 
 
+/**
+ * Simple control wrapper
+ * @param {Object} anElement The original element (optional)
+ * @constructor
+ * @extends UIView
+ */
+var Likn = function(aViewController) {
+	var self = this;
+	App.call(this, aViewController);
+	self.selectedIndex = -1;
 
+	self.docList = [];
 
-var load = function() {
-	var editor = new EpicEditor().load();
-	editor.preview();
+	if (self) {
+		this.editor = null;
+		this.searchField = null;
 
-	var index = new View('templates/search.html', 'ok');
-
-	// var search = new View('../templates/search.html', 'SearchView');
-
-	var viewController = new ViewController('/', index);
-
-	var app = new App(viewController);
-
-	var getDocs = function() {
-		return (localStorage['net.likn.docs']) ? JSON.parse(localStorage['net.likn.docs']) : {};
-	};
-	var docs = getDocs();
-
-	var docList = [];
-
-	var searchResultsElement = document.getElementById('resultList');
-	var search = app.rootViewController().view;
-
-	app.rootViewController().view.bindToAppElement(app, searchResultsElement, function(error, html) {
-		setTimeout(function(e) {
-			// red.name = "Fantastical";
-			// red.update(function(err, success){
-			// });
-			// search.removeAllSubviews();
-		}, 500);
-	});
-
-
-
-	(function(){
-		var activeSearch = '';
-		var aSearchField = document.getElementById('searchField');
-
-		var selectedIndex = -1;
-
-		var keyboardNavHandler = function(e) {
+		this.keyboardNavHandler = function(e) {
 			switch(e.keyCode) {
 				case NetLiknDownArrowKey:
 				case NetLiknTabKey:
-					println('down');
-					selectedIndex ++;
-					selectSubview();
+					self.selectedIndex ++;
+					self.selectSubview();
 					break;
 				case NetLiknUpArrowKey:
-					println('up');
-					selectedIndex --;
-					selectSubview();
+					self.selectedIndex --;
+					self.selectSubview();
 					break;
 				case NetLiknEnterKey:
-					println('enter');
-					editSelectedDocument();
+					window.removeEventListener('keydown', self.keyboardNavHandler);
+					self.editSelectedDocument();
 					break;
 				case NetLiknDeleteKey:
-					println('delete <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
-					aSearchField.value = aSearchField.value.substr(0, aSearchField.value.length - 1);
-					aSearchField.focus();
+					self.searchField.value = self.searchField.value.substr(0, self.searchField.value.length - 1);
+					self.searchField.focus();
 					e.preventDefault();
 					return false;
 				default:
-					println('?????????');
 					break;
 			}
 		};
+	}
+};
 
-		var switchToKeyboardNav = function() {
-			println("SWITHING TO KEYBOARD NAV");
-			aSearchField.blur();
-			window.addEventListener('keydown', keyboardNavHandler);
-		};
+Likn.prototype = Object.create(App.prototype);
+Likn.prototype.constructor = Likn;
 
-		var getListOfDocs = function() {
-			docs = getDocs();
-			return Object.keys(docs)
-					.map(function(aKey){
-						return docs[aKey];
-					});
-		};
+Likn.prototype.init = function() {
+	var self = this;
 
-		var updateDoc = function(aDoc) {
-			if (aDoc) {
-				docs = getDocs();
-				docs[aDoc.uuid] = aDoc;
-				localStorage['net.likn.docs'] = JSON.stringify(docs);
-			}
-		};
+	self.editor = new EpicEditor().load();
+	self.editor.preview();
 
-		var createDocument = function(name) {
-			UUID.shared().generate(function(uuid){
-				
-				println("Updating doc -----------------");
-				var newDoc = new MarkdownDocument(name, '# ' + name, uuid);
-				updateDoc(newDoc);
+	self.editor.on('update', function(){
+		var theContent = self.editor.exportFile();
+		var aDoc = self.docList[self.selectedIndex];
+		aDoc.body = theContent;
+		self.updateDoc(aDoc);
+		println("Updating doc.----------------------------");
+	});
 
-				activeSearch = null;
-				refreshSearchResults(function(){
-					println("Selecting " +  newDoc.uuid + " --------------------");
-					println("doc list: " + docList.length);
-					selectDoc(newDoc);
-				});
+
+	App.prototype.init.call(this);
+};
+
+Likn.prototype.getDocs = function() {
+	var self = this;
+	return (localStorage['net.likn.docs']) ? JSON.parse(localStorage['net.likn.docs']) : {};
+};
+
+Likn.prototype.getListOfDocs = function() {
+	var self = this;
+	var someDocs = self.getDocs();
+	return Object.keys(someDocs)
+			.map(function(aKey){
+				return someDocs[aKey];
 			});
-		};
-
-		
-
-		var performSearch = function(searchTerm) {
-			docList = getListOfDocs()
-					.filter(function(aDoc) {
-						var thisName = app.makeSearchFriendly(aDoc.title);
-						return (thisName.indexOf(searchTerm) != -1);
-					});
-			return docList;
-		};
-
-		var selectDoc = function(newDoc) {
-			for (var i = 0; i < docList.length; i++) {
-				var aDoc = docList[i];
-				if (aDoc.uuid == newDoc.uuid) {
-					println("Selecting subview " + i);
-					switchToKeyboardNav();
-					selectSubview(i);
-					break;
-				} else {
-					println(aDoc.uuid + " doesn't match " + newDoc.uuid);
-				}
-			}
-		};
-
-		var viewClicked = function(aView) {
-			if ('doc' in aView) {
-				selectDoc(aView['doc']);
-			}
-		};
-
-		var refreshSearchResults = function(cb) {
-			println("refresh search.");
-			var val = app.makeSearchFriendly(aSearchField.value);
-			if (activeSearch != val) {
-				activeSearch = val;
-				search.removeAllSubviews();
-				if (activeSearch != '') {
-					var resultViews = performSearch(val)
-						.map(function(aDoc){
-							return new SearchResultView(null, aDoc);;
-						});
-
-					while (resultViews[0]){
-						search.addSubview(resultViews.shift());
-					}
-				}
-				search.update(function(){
-					println("returned with " + search.subviews.length + " views");
-					for (var i = 0; i < search.subviews.length; i++){
-						var aView = search.subviews[i];
-						var makeClicker = function(v) {
-							return function(x){
-								viewClicked(v);
-							};
-						};
-						aView.element().addEventListener('click', makeClicker(aView));
-					}
-					if (cb) cb();
-				});
-			}
-		};
-
-
-		var selectSubview = function(anIndex) {
-			selectedIndex = (typeof anIndex === 'undefined') ? selectedIndex : anIndex;
-			if (selectedIndex == -1) {
-				var temp = aSearchField.value;
-				aSearchField.value = '';
-				aSearchField.focus();
-				aSearchField.value =  temp;
-			}
-			selectedIndex = Math.min(selectedIndex, search.subviews.length - 1);
-			for (var i = 0; i < search.subviews.length; i++) {
-				var aSubview = search.subviews[i];
-				if (i == selectedIndex) {
-					aSubview.element().addClassName('selected');
-					editor.importFile(docList[i].uuid, docList[i].body);
-					editor.open(docList[i].uuid);
-					editor.preview();
-				} else {
-					aSubview.element().removeClassName('selected');
-				}
-			}
-		};
-
-
-		
-		var editSelectedDocument = function() {
-			editor.edit();
-		};
-
-		editor.on('update', function(){
-			var theContent = editor.exportFile();
-			var aDoc = docList[selectedIndex];
-			aDoc.body = theContent;
-			updateDoc(aDoc);
-		});
-
-
-
-
-		var keydownHandler = function(e) {
-			window.removeEventListener('keydown', keyboardNavHandler);
-			selectedIndex = -1;
-			if (e.keyCode == NetLiknEnterKey) {
-				e.preventDefault();
-				createDocument(aSearchField.value);
-				return false;
-			} else if (	(e.keyCode == NetLiknDownArrowKey) ||
-						(e.keyCode == NetLiknTabKey)) {
-				switchToKeyboardNav();
-			}
-		};
-
-
-		var keyupHandler = function(e){
-			e = e || event;
-			refreshSearchResults();
-		};
-
-		aSearchField.addEventListener('keyup', _.throttle(keyupHandler, 100));
-		aSearchField.addEventListener('keydown', keydownHandler);
-
-
-	})();
 };
 
 
 
+Likn.prototype.createDocument = function(name) {
+	var self = this;
+	UUID.shared().generate(function(uuid){		
+		println("Updating doc -----------------");
+		var newDoc = new MarkdownDocument(name, '# ' + name, uuid);
+		self.updateDoc(newDoc);
+
+		self.activeSearch = null;
+		self.refreshSearchResults(function(){
+			self.selectDoc(newDoc, true);
+			self.editor.focus();
+		});
+	});
+};
+
+
+Likn.prototype.switchToKeyboardNav = function() {
+	var self = this;
+	println("SWITHING TO KEYBOARD NAV");
+	self.searchField.blur();
+	window.addEventListener('keydown', self.keyboardNavHandler);
+};
+
+
+
+Likn.prototype.selectSubview = function(anIndex, shouldEdit) {
+	var self = this;
+
+	var search = self.rootViewController().view;
+	self.selectedIndex = (typeof anIndex === 'undefined') ? self.selectedIndex : anIndex;
+	println("Selecting " + self.selectedIndex + " should edit? " + shouldEdit);
+	if (self.selectedIndex == -1) {
+		var temp = self.searchField.value;
+		self.searchField.value = '';
+		self.searchField.focus();
+		self.searchField.value =  temp;
+	}
+	self.selectedIndex = Math.min(self.selectedIndex, search.subviews.length - 1);
+	for (var i = 0; i < search.subviews.length; i++) {
+		var aSubview = search.subviews[i];
+		if (i == self.selectedIndex) {
+			aSubview.element().addClassName('selected');
+			self.editor.importFile(self.docList[i].uuid, self.docList[i].body);
+			self.editor.open(self.docList[i].uuid);
+			if (shouldEdit) {
+				self.editor.edit();
+				self.editor.focus();
+			}  else {
+				self.editor.preview();
+			}
+		} else {
+			aSubview.element().removeClassName('selected');
+		}
+	}
+};
+
+
+Likn.prototype.updateDoc = function(aDoc) {
+	var self = this;
+	if (aDoc) {
+		var allDocs = self.getDocs();
+		allDocs[aDoc.uuid] = aDoc;
+		localStorage['net.likn.docs'] = JSON.stringify(allDocs);
+	}
+};
+
+
+Likn.prototype.performSearch = function(searchTerm) {
+	var self = this;
+	self.docList = self.getListOfDocs()
+			.filter(function(aDoc) {
+				var thisName = self.makeSearchFriendly(aDoc.title);
+				return (thisName.indexOf(searchTerm) != -1);
+			});
+	return self.docList;
+};
+
+Likn.prototype.selectDoc = function(newDoc, shouldEdit) {
+	var self = this;
+	for (var i = 0; i < self.docList.length; i++) {
+		var aDoc = self.docList[i];
+		if (aDoc.uuid == newDoc.uuid) {
+			println("Selecting subview " + i + " should edit? " + shouldEdit);
+			if (!shouldEdit) self.switchToKeyboardNav();
+			self.selectSubview(i, shouldEdit);
+			break;
+		} else {
+			println(aDoc.uuid + " doesn't match " + newDoc.uuid);
+		}
+	}
+};
+
+Likn.prototype.viewClicked = function(aView) {
+	var self = this;
+	if ('doc' in aView) {
+		self.selectDoc(aView['doc']);
+	}
+};
+
+Likn.prototype.refreshSearchResults = function(cb) {
+	var self = this;
+	println("refresh search.");
+	var search = self.rootViewController().view;
+	var val = self.makeSearchFriendly(self.searchField.value);
+	if (self.activeSearch != val) {
+		self.activeSearch = val;
+		search.removeAllSubviews();
+		if (self.activeSearch != '') {
+			var resultViews = self.performSearch(val)
+				.map(function(aDoc){
+					return new SearchResultView(null, aDoc);;
+				});
+
+			while (resultViews[0]){
+				search.addSubview(resultViews.shift());
+			}
+		}
+		search.update(function(){
+			println("returned with " + search.subviews.length + " views");
+			for (var i = 0; i < search.subviews.length; i++){
+				var aView = search.subviews[i];
+				var makeClicker = function(v) {
+					return function(x){
+						self.viewClicked(v);
+					};
+				};
+				aView.element().addEventListener('click', makeClicker(aView));
+			}
+			if (cb) cb();
+		});
+	} else {
+		println("skipping.");
+	}
+};
+
+
+Likn.prototype.editSelectedDocument = function() {
+	var self = this;
+	self.editor.edit();
+};
+
+
+
+var load = function() {
+	var index = new View('templates/search.html', 'ok');
+	var viewController = new ViewController('/', index);
+
+	var app = new Likn(viewController);
+
+	var searchResultsElement = document.getElementById('resultList');
+	var aSearchField = document.getElementById('searchField');
+	app.searchField = aSearchField;
+
+
+	var keyupHandler = function(e){
+		e = e || event;
+		println("keyup handler");
+		app.refreshSearchResults();
+	};
+
+	var keydownHandler = function(e) {
+		println("keydown handler");
+		window.removeEventListener('keydown', app.keyboardNavHandler);
+		app.selectedIndex = -1;
+		if (e.keyCode == NetLiknEnterKey) {
+			e.preventDefault();
+			app.createDocument(app.searchField.value);
+			return false;
+		} else if (	(e.keyCode == NetLiknDownArrowKey) ||
+					(e.keyCode == NetLiknTabKey)) {
+			app.switchToKeyboardNav();
+		}
+	};
+
+
+	aSearchField.addEventListener('keyup', _.throttle(keyupHandler, 100));
+	aSearchField.addEventListener('keydown', keydownHandler);
+
+
+	app.rootViewController().view.bindToAppElement(app, searchResultsElement, function(error, html) {
+		println("bound.");
+		app.init();
+		app.docs = app.getDocs();
+	});
+
+
+};
