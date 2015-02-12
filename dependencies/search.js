@@ -227,7 +227,7 @@ Likn.prototype.performSearch = function(searchTerm) {
 	var self = this;
 	self.docList = self.getListOfDocs()
 			.filter(function(aDoc) {
-				var thisName = self.makeSearchFriendly(aDoc.title);
+				var thisName = aDoc.title.makeSearchFriendly();
 				return (thisName.indexOf(searchTerm) != -1);
 			});
 	return self.docList;
@@ -259,7 +259,7 @@ Likn.prototype.refreshSearchResults = function(cb) {
 	var self = this;
 	println("refresh search.");
 	var search = self.rootViewController().view;
-	var val = self.makeSearchFriendly(self.searchField.value);
+	var val = self.searchField.value.makeSearchFriendly();
 	if (self.activeSearch != val) {
 		self.activeSearch = val;
 		search.removeAllSubviews();
@@ -300,13 +300,14 @@ Likn.prototype.editSelectedDocument = function() {
 
 
 var load = function() {
-	var index = new View('templates/search.html', 'ok');
+	var index = new View('templates/search.html', 'Main');
 	var viewController = new ViewController('/', index);
 
 	var app = new Likn(viewController);
 
 	var searchResultsElement = document.getElementById('resultList');
 	var aSearchField = document.getElementById('searchField');
+	aSearchField.focus();
 	app.searchField = aSearchField;
 
 
@@ -334,12 +335,11 @@ var load = function() {
 	aSearchField.addEventListener('keyup', _.throttle(keyupHandler, 100));
 	aSearchField.addEventListener('keydown', keydownHandler);
 
-
 	app.rootViewController().view.bindToAppElement(app, searchResultsElement, function(error, html) {
 		println("bound.");
 		app.init();
 		app.docs = app.getDocs();
 	});
-
-
 };
+
+window.addEventListener('DOMContentLoaded', load);

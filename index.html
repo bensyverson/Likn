@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
-		<title>Pathfinder</title>
+		<title>Likn</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js"></script>
@@ -23,18 +23,19 @@
 <script src="epiceditor/js/epiceditor.js"></script>
 
 <script src="dependencies/lodash.js"></script>
+
 <script src="../PutStuffHere/ajax.js"></script>
-
-
 <script src="../PutStuffHere/queue.js"></script>
 <script src="../PutStuffHere/putstuffhere.js"></script>
+
+<script src="../uuidgen/uuid.js"></script>
+
 <script src="../Ishmael/dom.js"></script>
-<script src="../Ishmael/uuid.js"></script>
 <script src="../Ishmael/ishmael.js"></script>
 <script src="dependencies/search.js"></script>
 
 	</head>
-	<body onload="load()" id="appRoot">
+	<body id="appRoot">
 
 		<form action="search" id="search">
 			<input type="text" placeholder="Search, or type a name and press return to create a note." id="searchField" />
@@ -43,7 +44,7 @@
 		<div id="results">
 			<ul id="resultList">
 				<div class="clip">
-					<li><span>Title</span>
+					<!-- <li><span>Title</span>
 						…Short description which gives you a preview of this item…
 					</li>
 					<li><span>Title</span>
@@ -54,7 +55,7 @@
 					</li>
 					<li><span>Title</span>
 						…Short description which gives you a preview of this item…
-					</li>
+					</li> -->
 				</div>
 			</ul>
 
