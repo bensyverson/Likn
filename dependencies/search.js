@@ -69,7 +69,7 @@ SearchResultView.prototype.updateLocals = function(cb) {
 	var self = this;
 
 	self.locals['title'] = self.doc.title;
-	self.locals['body'] = self.doc.body;
+	self.locals['body'] = self.doc.body.substr(0, Math.min(self.doc.body.length, 60));
 
 	View.prototype.updateLocals.call(this, cb);
 };
